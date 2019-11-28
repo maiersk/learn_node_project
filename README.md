@@ -14,9 +14,7 @@
 13. express-winston
 14. express-formidable
 
+## install command
 ```
-    npm i config-lite connect-flash connect-mongo ejs express express-session marked moment mongolass objectid-to-timestamp sha1 winston express-winston --save
-```
-```
-    npm i express-formidable --save
+    npm i config-lite connect-flash connect-mongo ejs express express-session marked moment mongolass objectid-to-timestamp sha1 winston express-winston express-formidable --save
 ```
