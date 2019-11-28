@@ -6,7 +6,7 @@ const checkLogin = require("../middlewares/check").checkLogin
 //Get 所有或特定用户的文章页
 //eg: GET /posts?author=xxx
 router.get('/', function(req, res, next) {
-    res.send("主页")
+    res.render("posts")
 })
 
 router.post("/create", checkLogin, function(req, res, next) {
