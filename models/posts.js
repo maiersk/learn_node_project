@@ -1,6 +1,31 @@
 const marked = require("marked")
 const Post = require("../lib/mongo").Post
 
+const CommentModel = require("./comments")
+
+Post.plugin("addCommentsCount", {
+    afterFind : function(posts) {
+        return Promise.all(posts.map(function (post) {
+            return CommentModel.getCommentsCount(post._id)
+                .then(function(count) {
+                    post.commentsCount = count
+                    return post
+                })
+        }))
+    },
+
+    afterFindOne : function(post) {
+        if (post) {
+            return CommentModel.getCommentsCount(post._id)
+                .then(function(count) {
+                    post.commentsCount = count
+                    return post
+                })
+        }
+        return post
+    }
+})
+
 Post.plugin("contentToHtml", {
     afterFind : function(posts) {
         return posts.map(function (post) {
@@ -27,6 +52,7 @@ module.exports = {
             .findOne({ _id : postId })
             .populate({ path : 'author', model : 'User' })
             .addCreatedAt()
+            .addCommentsCount()
             .contentToHtml()
             .exec()
     },
@@ -42,6 +68,7 @@ module.exports = {
             .populate({ path : 'author', model : 'User' })
             .sort({ _id : -1 })
             .addCreatedAt()
+            .addCommentsCount()
             .contentToHtml()
             .exec()
     },
@@ -54,7 +81,7 @@ module.exports = {
     },
 
     //通过文章id获取一篇原生文章(编辑文章)
-    getRawPostById : function getPostById (postId) {
+    getRawPostById : function getRawPostById (postId) {
         return Post
             .findOne({ _id : postId })
             .populate({ path : 'author', model : 'User' })
@@ -62,12 +89,19 @@ module.exports = {
     },
 
     // 通过文章 id 更新一篇文章
-    getdatePostById : function getRawPostById (postId, data) {
+    getdatePostById : function getdatePostById (postId, data) {
         return Post.update({ _id : postId }, { $set : data }).exec()
     },
 
     // 通过文章 id 删除一篇文章
-    delPostById : function delPostById (postId) {
-        return Post.deleteOne({ _id : postId }).exec()
+    delPostById : function delPostById (postId, author) {
+        return Post.deleteOne({ author : author, _id : postId })
+            .exec()
+            .then(function (res) {
+                //文章删除后，再三次改文件下的所有留言
+                if (res.result.ok && res.result.n > 0) {
+                    return CommentModel.delCommentById(postId)
+                }
+            })
     }
 }

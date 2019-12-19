@@ -2,6 +2,8 @@ const express = require("express")
 const router = express.Router()
 
 const PostModel = require("../models/posts")
+const CommentModel = require("../models/comments")
+
 const checkLogin = require("../middlewares/check").checkLogin
 
 //Get 所有或特定用户的文章页
@@ -61,15 +63,20 @@ router.get("/:postId", function(req, res, next) {
 
     Promise.all([
         PostModel.getPostById(postId),  //获取文章信息
+        CommentModel.getComments(postId), //获取该文件所有留言
         PostModel.incPv(postId) //pv 浏览数加一
     ])
         .then(function (result) {
             const post = result[0]
+            const comments = result[1]
             if (!post) {
                 throw new Error("改文章不存在")
             }
         
-            res.render("post", { post : post })
+            res.render("post", { 
+                post : post,
+                comments : comments
+            })
         })
         .catch(next)
 })
