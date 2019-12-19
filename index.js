@@ -53,6 +53,13 @@ app.use(function(req, res, next) {
 //路由
 routes(app)
 
+//错误通知
+app.use(function(err, req, res, next) {
+    console.error(err)
+    req.flash("error", err.message)
+    res.redirect("/posts")
+})
+
 //监听事件，（端口、回调func）
 app.listen(config.port, function() {
     console.log(`${pkg.name} listenging on prot ${config.port}`)
